@@ -1,8 +1,8 @@
 <template>
   <div class="index container" v-if="smoothiesLength">
-    <div class="card" v-for="smoothie in smoothies" :key="smoothie.id">
+    <div class="card" v-for="(smoothie, index) in smoothies" :key="smoothie.id">
       <div class="card-content">
-        <i class="delete material-icons" @click="deleteSmoothie(smoothie.id)">delete</i>
+        <i class="delete material-icons" @click="deleteSmoothie(smoothie.id, index)">delete</i>
         <h2 class="indigo-text">{{ smoothie.title }}</h2>
         <ul class="ingredients">
           <li v-for="(ingredient, index) in smoothie.ingredients" :key="index">
@@ -68,10 +68,14 @@ export default {
 
 <style>
 .index {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-gap: 30px;
-  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.index .card {
+  margin: 50px 10px 0 10px;
+  width: 350px;
 }
 
 .index .card .card-content .delete {
