@@ -1,22 +1,20 @@
 <template>
-  <div>
-    <div class="index container" v-if="smoothiesLength">
-      <div class="card" v-for="smoothie in smoothies" :key="smoothie.id">
-        <div class="card-content">
-          <i class="delete material-icons" @click="deleteSmoothie(smoothie.id)">
-            delete
-          </i>
-          <h2 class="indigo-text">{{ smoothie.title }}</h2>
-          <ul class="ingredients">
-            <li v-for="(ingredient, index) in smoothie.ingredients" :key="index">
-              <span class="chip">{{ ingredient }}</span>
-            </li>
-          </ul>
-        </div>
+  <div class="index container" v-if="smoothiesLength">
+    <div class="card" v-for="smoothie in smoothies" :key="smoothie.id">
+      <div class="card-content">
+        <i class="delete material-icons" @click="deleteSmoothie(smoothie.id)">delete</i>
+        <h2 class="indigo-text">{{ smoothie.title }}</h2>
+        <ul class="ingredients">
+          <li v-for="(ingredient, index) in smoothie.ingredients" :key="index">
+            <span class="chip">{{ ingredient }}</span>
+          </li>
+        </ul>
       </div>
-    </div>
-    <div v-if="!smoothiesLength">
-      <h3>No more smoothie to show =(</h3>
+      <router-link :to="{ name: 'EditSmoothie', params: { slug: smoothie.slug } }">
+        <span class="btn-floating btn-large halfway-fab pink">
+          <i class="edit material-icons">edit</i>
+        </span>
+      </router-link>
     </div>
   </div>
 </template>
@@ -28,26 +26,29 @@ export default {
   name: "Index",
   data() {
     return {
-      smoothies: [],
+      smoothies: []
     };
   },
 
   methods: {
     deleteSmoothie(id, index) {
-      fb.collection('smothies').doc(id).delete().then(() => {
-          this.smoothies.splice(index, 1)
-      })
-      .catch(()=>{})
+      fb.collection("smothies")
+        .doc(id)
+        .delete()
+        .then(() => {
+          this.smoothies.splice(index, 1);
+        })
+        .catch(() => {});
     },
     async getSmoothiesFromFirebase() {
       await fb
         .collection("smothies")
         .get()
         .then(snapshot => {
-            snapshot.forEach(doc => {
-              const smoothie = doc.data();
-              smoothie.id = doc.id;
-              this.smoothies.push(smoothie);
+          snapshot.forEach(doc => {
+            const smoothie = doc.data();
+            smoothie.id = doc.id;
+            this.smoothies.push(smoothie);
           });
         });
     }
@@ -55,7 +56,7 @@ export default {
 
   computed: {
     smoothiesLength() {
-      return this.smoothies.length
+      return this.smoothies.length;
     }
   },
 

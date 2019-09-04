@@ -1,74 +1,95 @@
 <template>
-  <div class="add-smoothie container">
-    <h2 class="center-align indigo-text">Add New Smoothie Recipe</h2>
-    <form @submit.prevent>
+  <div class="edit-smoothie container">
+    <div v-if="smoothie" >
+      <h2>Edit "{{smoothie.title}}"" Smoothie</h2>
+      <form @submit.prevent>
       <div class="field title">
         <label for="title">Smoothie Title</label>
-        <input type="text" v-model="title" name="title" id="title">
+        <input type="text" v-model="smoothie.title" name="title" id="title">
       </div>
-      <div class="delete-parent" v-for="(ingredient, index) in ingredients" :key="index">
+      <div class="delete-parent" v-for="(ingredient, index) in smoothie.ingredients" :key="index">
         <label for="ingredient">ingredient:</label>
-        <input type="text" name="ingredient" id="ingredient" v-model="ingredients[index]">
+        <input type="text" name="ingredient" id="ingredient" v-model="smoothie.ingredients[index]">
         <i class="material-icons delete" @click="deleteIngredient(index)">delete</i>
       </div>
       <div class="field add-ingredient">
         <label for="add-ingredient">Add an ingredient</label>
         <input type="text" name="add-ingredient" v-model="another" 
           @keydown.tab.prevent="addIng"  id="add-ingredient">
-        <button @click="addIng" class="btn blue addButon">Add</button>
+          <button @click="addIng" class="btn blue addButon">Add</button>
       </div>
       <div class="field center-align">
         <p class="red-text" v-if="isEmpty">{{report}}</p>
-        <button @click="submitSmoothie" class="btn pink">Add Smoothie</button>
+        <button @click="editSmoothie" class="btn pink">Update Smoothie</button>
       </div>
     </form>
+    </div>
+    <div v-if="!smoothie">
+      <h2>Smoothie not Found</h2>
+    </div>
   </div>
 </template>
 
 <script>
-import fb from '@/firebase/init.js'
+import fb from "@/firebase/init.js";
 import slugify from 'slugify'
 
 export default {
-  name: 'AddSmoothie',
+  name: "EditSmoothie",
+  props: ["slug"],
   data() {
     return {
-      title: '',
-      slug: '',
+      smoothie: null,
       another: '',
-      ingredients: [],
       isEmpty: false,
       report: ''
-    }
+    };
   },
 
   methods: {
-    submitSmoothie() {
-      if(!title){
+    async getSmoothieDocBySlug() {
+      const res = await fb
+        .collection("smothies")
+        .where("slug", "==", this.slug);
+
+      res.get().then(snapshot => {
+        snapshot.forEach(doc => {
+          this.smoothie = doc.data();
+          this.smoothie.id = doc.id;
+        });
+      });
+    },
+    editSmoothie() {
+      if(!this.smoothie.title){
+        this.isEmpty = true
         this.report = 'Title cannot be empty!'
         setTimeout(()=> this.report = '', 3000)
         return
       }
       
-      this.slug = slugify(this.title, {
+      this.isEmpty = false
+
+      this.smoothie.slug = slugify(this.smoothie.title, {
         replacement: '-',
         remove: /[*+~.()'"!:@]/g,
         lower: true
       })
 
-      fb.collection('smothies').add({
-        title: this.title,
-        ingredients: this.ingredients,
-        slug: this.slug
+      fb.collection('smothies').doc(this.smoothie.id).update({
+        title: this.smoothie.title,
+        ingredients: this.smoothie.ingredients,
+        slug: this.smoothie.slug
       }).then(() => {
         this.$router.push({ name: 'Index' })
       })
+      
     },
+    
     addIng() {
       const isNotEmpty = () => this.another.trim()
       if(isNotEmpty()){
         const trimedAnother = this.another.trim()
-        this.ingredients.push(trimedAnother)
+        this.smoothie.ingredients.push(trimedAnother)
         this.another = ''
         this.isEmpty = false
         
@@ -78,33 +99,37 @@ export default {
         return
       }  
     },
+    
     deleteIngredient(index) {
-      this.ingredients.splice(index, 1)
+      this.smoothie.ingredients.splice(index, 1)
     }
   },
 
-}
+  created() {
+    this.getSmoothieDocBySlug();
+  }
+};
 </script>
 
 <style>
-  .add-smoothie {
+  .edit-smoothie {
     margin-top: 60px;
     padding: 20px;
     max-width: 500px;
   }
 
-  .add-smoothie h2 {
+  .edit-smoothie h2 {
     font-size: 2em;
     margin: 20px auto;
   }
 
-  .add-smoothie .field {
+  .edit-smoothie .field {
     margin: 20px auto;
   }
-  .add-smoothie .delete-parent {
+  .edit-smoothie .delete-parent {
     position: relative;
   }
-  .add-smoothie .delete-parent .delete {
+  .edit-smoothie .delete-parent .delete {
     position: absolute;
     right: 0;
     bottom: 16px;
